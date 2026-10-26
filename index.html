@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FoodFinder — Find Food Assistance Near You</title>
+<meta name="description" content="Find food pantries, soup kitchens, community fridges, SNAP/WIC offices, free school meals, and farmers markets that accept SNAP — all in one place." />
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<!-- Leaflet (map) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+<!-- Our styles -->
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#home">
+      <span class="brand-mark" aria-hidden="true">🌾</span>
+      <span class="brand-text">Food<span>Finder</span></span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Main navigation">
+      <a href="#directory" data-nav="directory">Find Food</a>
+      <a href="#help" data-nav="help">Get Help</a>
+      <a href="#about" data-nav="about">About</a>
+      <a href="#submit" data-nav="submit">Submit a Resource</a>
+    </nav>
+
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav" aria-label="Toggle menu">☰</button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ============ HOME ============ -->
+  <section class="view active" id="view-home">
+    <div class="hero">
+      <div class="wrap hero-inner">
+        <!-- ✏️ EDIT: replace with your city / region -->
+        <p class="eyebrow">📍 Serving Austin, TX &amp; surrounding neighborhoods</p>
+        <h1>Find food help near you — <em>all in one place.</em></h1>
+        <p class="lede">
+          Food pantries, soup kitchens, community fridges, SNAP/WIC offices, free school meals, and
+          farmers markets that accept SNAP — mapped together, with hours, eligibility, and what to
+          bring shown up front instead of scattered across flyers and a dozen different websites.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="#directory">Find resources near you →</a>
+          <a class="btn btn-ghost btn-lg" href="#help">Am I eligible for SNAP?</a>
+        </div>
+
+        <!-- ⚠️ Replace these numbers with your own local statistic + source before submitting. -->
+        <ul class="hero-stats">
+          <li><strong>1 in 8</strong><span>neighbors in our region faces food insecurity</span></li>
+          <li><strong>15+</strong><span>free food resources mapped in this directory</span></li>
+          <li><strong>0</strong><span>accounts, logins, or forms needed to search</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="wrap section">
+      <h2 class="section-title">How it works</h2>
+      <div class="grid-3">
+        <article class="card feature">
+          <div class="feature-ico">🔎</div>
+          <h3>Search &amp; filter</h3>
+          <p>Filter by resource type — pantry, soup kitchen, community fridge, SNAP office, school meals — and by “open now.”</p>
+        </article>
+        <article class="card feature">
+          <div class="feature-ico">🗺️</div>
+          <h3>See it on a map</h3>
+          <p>Every listing is pinned with a color and icon, so you can tell a pantry from a fridge at a glance. A list view works just as well.</p>
+        </article>
+        <article class="card feature">
+          <div class="feature-ico">✅</div>
+          <h3>Know before you go</h3>
+          <p>Hours, phone, languages spoken, eligibility rules, and whether you need an ID or an appointment — before you leave the house.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="wrap section">
+      <h2 class="section-title">What you'll find</h2>
+      <div class="category-grid" id="homeCategories"><!-- filled by JS --></div>
+    </div>
+  </section>
+
+  <!-- ============ DIRECTORY ============ -->
+  <section class="view" id="view-directory">
+    <div class="wrap directory-head">
+      <h1>Find food near you</h1>
+      <p class="muted" id="directorySub">Search the directory, or filter by what you need today.</p>
+    </div>
+
+    <div class="wrap">
+      <div class="card filters">
+        <div class="search-row">
+          <label class="search">
+            <span class="sr-only">Search resources</span>
+            <span class="search-ico" aria-hidden="true">🔎</span>
+            <input id="searchInput" type="search" placeholder="Search by name, address, or service…" autocomplete="off" />
+          </label>
+          <button class="btn btn-ghost" id="locateBtn" type="button">📍 Use my location</button>
+        </div>
+
+        <div class="chips" id="typeChips" role="group" aria-label="Filter by resource type"></div>
+
+        <div class="filter-row">
+          <label class="switch">
+            <input type="checkbox" id="openNowToggle" />
+            <span>Open now</span>
+          </label>
+
+          <label class="switch">
+            <input type="checkbox" id="savedToggle" />
+            <span>Saved only ★</span>
+          </label>
+
+          <label class="select-wrap">
+            <span>Sort</span>
+            <select id="sortSelect">
+              <option value="distance">Distance</option>
+              <option value="name">Name (A–Z)</option>
+            </select>
+          </label>
+
+          <div class="seg" id="viewSeg" role="group" aria-label="Toggle map or list">
+            <button type="button" data-view="list" class="active">List</button>
+            <button type="button" data-view="map">Map</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap directory-body" id="directoryBody">
+      <div class="map-col">
+        <div id="map" aria-label="Map of food resources"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="list-col">
+        <p class="results-meta" id="resultsMeta"></p>
+        <div id="resourceList" class="resource-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GET HELP / FAQ ============ -->
+  <section class="view" id="view-help">
+    <div class="wrap directory-head">
+      <h1>Get help</h1>
+      <p class="muted">Plain-language basics on SNAP, WIC, school meals — and who to call right now.</p>
+    </div>
+
+    <div class="wrap help-grid">
+      <article class="card help-card">
+        <h2>🛒 SNAP (food stamps)</h2>
+        <p><strong>What it is:</strong> A monthly benefit on an EBT card that buys groceries. It does not replace food pantries — most families use both.</p>
+        <p><strong>Who qualifies:</strong> Households with limited income and savings. The income limit is roughly 130% of the federal poverty line, and there are deductions for rent, childcare, and medical costs — so it's worth applying even if you think you won't qualify.</p>
+        <p><strong>How to apply:</strong> Call <a href="tel:211">2-1-1</a>, apply online through your state's benefits portal, or walk into any SNAP office in the directory above.</p>
+        <p><strong>What to bring:</strong> Photo ID, proof of address, pay stubs or a benefit letter, and Social Security numbers for people in your household. You can start an application without every document.</p>
+      </article>
+
+      <article class="card help-card">
+        <h2>🤰 WIC</h2>
+        <p><strong>What it is:</strong> Food, formula, and breastfeeding support for pregnant and postpartum parents, infants, and children under 5.</p>
+        <p><strong>Who qualifies:</strong> Income-based, plus a nutrition or health risk assessment done at the appointment. Working families often qualify.</p>
+        <p><strong>How to apply:</strong> Call your local WIC office or <a href="tel:211">2-1-1</a> to schedule. Bring ID, proof of address, proof of income, and your child if they're being enrolled.</p>
+      </article>
+
+      <article class="card help-card">
+        <h2>🎒 Free &amp; reduced school meals</h2>
+        <p>Every public school district accepts free/reduced meal applications. Many schools are now "community eligible," which means <em>all</em> students eat free with no application at all.</p>
+        <p>During summer and school breaks, the Summer Food Service Program serves free meals to anyone 18 and under — no registration, no ID. Look for "School meals" listings in the directory.</p>
+      </article>
+
+      <article class="card help-card">
+        <h2>📞 Call right now</h2>
+        <ul class="link-list">
+          <li><a href="tel:18663486479">National Hunger Hotline — 1-866-3-HUNGRY</a><br /><span class="muted small">Mon–Fri, 7am–10pm ET. Spanish: 1-877-8-HAMBRE.</span></li>
+          <li><a href="tel:211">2-1-1</a><br /><span class="muted small">24/7 referral line for food, rent, utilities, and health services.</span></li>
+          <li><a href="tel:988">9-8-8</a><br /><span class="muted small">Mental health crisis line, if you need support beyond food.</span></li>
+        </ul>
+      </article>
+
+      <p class="disclaimer">
+        This site is a directory, not an official benefits office. Eligibility rules change — always
+        confirm details with the agency before you go.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="view" id="view-about">
+    <div class="wrap directory-head">
+      <h1>Why I built this</h1>
+    </div>
+
+    <div class="wrap about-grid">
+      <div class="card about-card">
+        <!-- ✏️ EDIT THIS — this is your demo video script. -->
+        <p class="lede">
+          Last year I watched a neighbor spend an entire afternoon calling around to find out which
+          pantry was open — and then get turned away because she didn't know she needed to bring an ID.
+          The information existed. It was just scattered across flyers, Facebook posts, and five
+          different organizations' websites.
+        </p>
+        <p>
+          FoodFinder puts it in one place: every free food resource in the area on a single map, with
+          hours, eligibility, and what-to-bring details shown <em>before</em> you make the trip.
+        </p>
+        <p>
+          The directory is built to be usable by people who are stressed, short on time, on a slow
+          phone, or reading in their second language. No login. No forms. No data collected.
+        </p>
+        <h2>Where this goes next</h2>
+        <ul class="vision-list">
+          <li><strong>Crowd-sourced updates.</strong> "The pantry is out of produce today" — reported by neighbors, in real time.</li>
+          <li><strong>SMS access.</strong> Text a ZIP code, get the three nearest open pantries. People without a smartphone or data plan are exactly the people who need this most.</li>
+          <li><strong>Live data.</strong> Sync with 211 and local open-data feeds so listings update automatically instead of going stale.</li>
+          <li><strong>Multi-language and low-literacy modes.</strong> Icon-first navigation and a read-aloud option.</li>
+          <li><strong>Seasonal highlighting.</strong> Summer meal sites in June, holiday food drives in November.</li>
+        </ul>
+      </div>
+
+      <aside class="card about-side">
+        <h2>Built with</h2>
+        <ul class="plain-list">
+          <li>HTML, CSS, vanilla JavaScript</li>
+          <li>Leaflet + OpenStreetMap (no API key, no cost)</li>
+          <li>A single flat JSON data file — no backend</li>
+          <li>localStorage for saved resources and community submissions</li>
+        </ul>
+        <h2>Accessibility</h2>
+        <ul class="plain-list">
+          <li>Keyboard-navigable map, list, and modal</li>
+          <li>Full list view for anyone who finds maps hard to use</li>
+          <li>Color + icon + text on every status badge</li>
+          <li>Large tap targets on mobile</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ SUBMIT A RESOURCE ============ -->
+  <section class="view" id="view-submit">
+    <div class="wrap directory-head">
+      <h1>Submit a resource</h1>
+      <p class="muted">
+        Know a pantry, fridge, or meal program that isn't listed? Add it — submissions are saved in your
+        browser and appear in the directory immediately (marked as community-submitted).
+      </p>
+    </div>
+
+    <div class="wrap submit-grid">
+      <form class="card form" id="submitForm" novalidate>
+        <div class="field">
+          <label for="f-name">Resource name *</label>
+          <input id="f-name" name="name" type="text" required placeholder="e.g. Eastside Community Pantry" />
+        </div>
+
+        <div class="field">
+          <label for="f-type">Type *</label>
+          <select id="f-type" name="type" required>
+            <option value="">Select a type…</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f-address">Address *</label>
+          <input id="f-address" name="address" type="text" required placeholder="123 Main St, City, ST 00000" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-phone">Phone</label>
+            <input id="f-phone" name="phone" type="tel" placeholder="(512) 555-0100" />
+          </div>
+          <div class="field">
+            <label for="f-website">Website</label>
+            <input id="f-website" name="website" type="url" placeholder="https://…" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-hours">Hours (plain text)</label>
+          <input id="f-hours" name="hours" type="text" placeholder="e.g. Tue &amp; Thu 9am–1pm, Sat 10am–12pm" />
+        </div>
+
+        <div class="field">
+          <label for="f-eligibility">Eligibility notes</label>
+          <textarea id="f-eligibility" name="eligibility" rows="2" placeholder="Who can use this? Any income or residency rules?"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="f-bring">What to bring</label>
+          <textarea id="f-bring" name="bring" rows="2" placeholder="ID required? Walk-in or appointment? Income verification?"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-languages">Languages spoken</label>
+            <input id="f-languages" name="languages" type="text" placeholder="English, Spanish" />
+          </div>
+          <div class="field">
+            <label for="f-id">Requires ID?</label>
+            <select id="f-id" name="requiresId">
+              <option value="false">No / not required</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-notes">Anything else</label>
+          <textarea id="f-notes" name="notes" rows="2" placeholder="Parking, entrance, first-visit tips…"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Pin the location on the map *</label>
+          <p class="muted small" id="submitCoords">Click anywhere on the map below to drop a pin.</p>
+        </div>
+
+        <button class="btn btn-primary btn-lg" type="submit">Add to directory</button>
+        <p class="form-msg" id="formMsg" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="card submit-map-card">
+        <div id="submitMap"></div>
+        <p class="muted small">
+          Click the map to place the resource. Your submission is stored locally in this browser —
+          in a production version it would go to a moderation queue.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div>
+      <p class="brand-text small-brand"><span aria-hidden="true">🌾</span> FoodFinder</p>
+      <p class="muted small">A Congressional App Challenge project. Built to be fast, free, and usable by everyone.</p>
+    </div>
+    <div class="footer-links">
+      <a href="#directory">Find food</a>
+      <a href="#help">Get help</a>
+      <a href="#about">About</a>
+      <a href="#submit">Submit a resource</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="Close details">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<!-- App JS -->
+<script src="script.js"></script>
+</body>
+</html>
